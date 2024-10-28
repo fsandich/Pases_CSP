@@ -1,0 +1,39 @@
+---
+- name: Descargar activo desde GitHub usando curl
+  hosts: localhost
+  tasks:
+    - name: Crear directorio
+      ansible.builtin.file:
+        path: /tmp
+        state: directory
+        mode: '0755'
+
+    - name: Descargar archivo desde GitHub
+      ansible.builtin.get_url:
+        url: 'https://api.github.com/repos/BAC-Credomatic/ecsp-pasarelas-wcf/releases/assets/194476020'
+        headers:
+          Authorization: 'Bearer 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'
+          Accept: 'application/octet-stream'
+        dest: /tmp/archivodeinstalacion.zip
+        mode: '0644'
+      register: download_result
+
+    - name: Resultado de la descarga
+      ansible.builtin.debug:
+        msg: "El resultado de la descarga es: {{ download_result }}"
+
+- name: Copiar archivo a servidores destino
+  hosts: servidores_destino
+  tasks:
+    - name: Copiar archivo al servidor destino
+      ansible.builtin.copy:
+        src: /tmp/archivodeinstalacion.zip
+        dest: /tmp/archivodeinstalacion.zip
+        mode: '0644'
+
+    - name: Descomprimir archivo
+      ansible.builtin.unarchive:
+        src: /tmp/archivodeinstalacion.zip
+        dest: /tmp/
+        remote_src: true
+        mode: '0644'
