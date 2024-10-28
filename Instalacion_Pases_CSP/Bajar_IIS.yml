@@ -1,0 +1,7 @@
+---
+- name: Bajar los servicios de IIS de la instalacion del pase
+  tasks:
+    - name: Bajar el ISS de Prueba de la instalacion del pase
+      win_iis_webapppool:
+        name: eCSPAnsible
+        state: stopped
