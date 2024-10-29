@@ -1,0 +1,75 @@
+---
+
+- name: Obtener releases de GitHub usando GraphQL
+  hosts: localhost
+  vars:
+    github_token: "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"
+    owner: "BAC-Credomatic"
+    repo: "ecsp-pasarelas-wcf"
+  tasks:
+    - name: Realizar consulta GraphQL
+      ansible.builtin.uri:
+        url: https://api.github.com/graphql
+        method: POST
+        headers:
+          Authorization: "Bearer {{ github_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          query: |
+            query {
+              repository(owner: "{{ owner }}", name: "{{ repo }}") {
+                releases(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                  nodes {
+                    name
+                    tagName
+                    publishedAt
+                    releaseAssets(first: 10) {
+                      nodes {
+                        name
+                        downloadUrl
+                      }
+                    }
+                  }
+                }
+              }
+            }
+      register: result
+
+    - name: Mostrar resultado
+      ansible.builtin.debug:
+        var: result.json.data.repository.releases.nodes
+
+    # Manejo de paginación si hay más páginas
+    - name: Obtener más releases si es necesario
+      when: result.json.data.repository.releases.pageInfo.hasNextPage
+      ansible.builtin.uri:
+        url: https://api.github.com/graphql
+        method: POST
+        headers:
+          Authorization: "Bearer {{ github_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          query: |
+            query {
+              repository(owner: "{{ owner }}", name: "{{ repo }}") {
+                releases(first: 100, after: "{{ result.json.data.repository.releases.pageInfo.endCursor }}", orderBy: { field: CREATED_AT, direction: DESC }) {
+                  nodes {
+                    name
+                    tagName
+                    publishedAt
+                  }
+                }
+              }
+            }
+      register: more_releases
+
+    - name: Mostrar más releases si hay más páginas
+      when: more_releases is defined
+      ansible.builtin.debug:
+        var: more_releases.json.data.repository.releases.nodes
