@@ -7,8 +7,8 @@
       ansible.builtin.uri:
         url: "https://bac.splunkcloud.com:8089/services/search/jobs"
         method: POST
-        user: "<usuario>"
-        password: "<contraseña>"
+        user: "{{ Usuario }}"
+        password: "{{ Contrasena }}"
         force_basic_auth: true
         body: >
           search=search sourcetype="csp_conectividad" Bin!=00 AND Terminal!="0."
@@ -28,8 +28,8 @@
       ansible.builtin.uri:
         url: "https://bac.splunkcloud.com:8089/services/search/jobs/{{ search_id }}/results/"
         method: GET
-        user: "<usuario>"
-        password: "<contraseña>"
+        user: "{{ Usuario }}"
+        password: "{{ Contrasena }}"
         force_basic_auth: true
         validate_certs: false
         return_content: true
