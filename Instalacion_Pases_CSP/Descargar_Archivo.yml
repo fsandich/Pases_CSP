@@ -1,18 +1,34 @@
 ---
-- name: Descargar activo desde GitHub usando curl
+- name: Descargar activo desde GitHub usando ApiRest
   hosts: localhost
+  vars:
+    github_token: "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"
+    owner: "BAC-Credomatic"
+    repo: "ecsp-pasarelas-wcf"
   tasks:
-    - name: Crear directorio
-      ansible.builtin.file:
-        path: /tmp
-        state: directory
-        mode: '0755'
+    - name: Obtener el ultimo release creado en GitHub
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/{{ owner }}/{{ repo }}/releases/latest
+        method: GET
+        headers:
+          Authorization: "Bearer {{ github_token }}"
+          accept: "application/vnd.github.v3+json"
+      register: release_info
+
+    - name: Resultado de la consulta
+      ansible.builtin.debug:
+        msg: "El resultado de la consulta es: {{ release_info.json }}"
+
+    - name: Extraer URL de descarga
+      ansible.builtin.set_fact:
+        asset_api_url: "{{ release_info.json.assets[0].url }}"
 
     - name: Descargar archivo desde GitHub
+      when: release_info.json.assets | length > 0
       ansible.builtin.get_url:
-        url: 'https://api.github.com/repos/BAC-Credomatic/ecsp-pasarelas-wcf/releases/assets/194476020'
+        url: "{{ asset_api_url }}"
         headers:
-          Authorization: 'Bearer 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'
+          Authorization: 'Bearer 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'
           Accept: 'application/octet-stream'
         dest: /tmp/archivodeinstalacion.zip
         mode: '0644'
