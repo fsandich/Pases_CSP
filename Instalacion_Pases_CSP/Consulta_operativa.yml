@@ -5,10 +5,10 @@
   tasks:
     - name: Obtener el SID para la consulta en Splunk
       ansible.builtin.uri:
-        url: "https://bac.splunkcloud.com:8089/services/search/jobs"
+        url: "https://bac.splunkcloud.com/services/search/jobs"
         method: POST
-        user: "{{ Usuario }}"
-        password: "{{ Contrasena }}"
+        user: "{{ splunk_user }}"
+        password: "{{ splunk_password }}"
         force_basic_auth: true
         body: >
           search=search sourcetype="csp_conectividad" Bin!=00 AND Terminal!="0."
@@ -20,16 +20,20 @@
         return_content: true
       register: search_id_response
 
-    - name: Extraer el SID del response
+    - name: Verificar y mostrar la respuesta completa para depuración
+      ansible.builtin.debug:
+        var: search_id_response.content
+
+    - name: Convertir la respuesta a JSON y extraer el SID
       ansible.builtin.set_fact:
-        search_id: "{{ search_id_response.json.sid }}"
+        search_id: "{{ (search_id_response.content | from_json).sid }}"
 
     - name: Obtener los resultados usando el SID
       ansible.builtin.uri:
-        url: "https://bac.splunkcloud.com:8089/services/search/jobs/{{ search_id }}/results/"
+        url: "https://<splunk_instance>/services/search/jobs/{{ search_id }}/results/"
         method: GET
-        user: "{{ Usuario }}"
-        password: "{{ Contrasena }}"
+        user: "{{ splunk_user }}"
+        password: "{{ splunk_user }}"
         force_basic_auth: true
         validate_certs: false
         return_content: true
