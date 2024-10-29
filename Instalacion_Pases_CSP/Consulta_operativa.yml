@@ -1,0 +1,40 @@
+---
+- name: Ejecutar consulta en Splunk
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Obtener el SID para la consulta en Splunk
+      ansible.builtin.uri:
+        url: "https://<splunk_instance>/services/search/jobs"
+        method: POST
+        user: "<usuario>"
+        password: "<contraseña>"
+        force_basic_auth: true
+        body: >
+          search=search sourcetype="csp_conectividad" Bin!=00 AND Terminal!="0."
+          NOT Terminal IN (TVGRIDS3,NISP0573,COM00013,ROBOTWS2,CPPL0030,CROPERA1,MONIWCF1)
+          | timechart count by host earliest=-30m
+        body_format: form-urlencoded
+        validate_certs: false
+        status_code: 201
+        return_content: true
+      register: search_id_response
+
+    - name: Extraer el SID del response
+      ansible.builtin.set_fact:
+        search_id: "{{ search_id_response.json.sid }}"
+
+    - name: Obtener los resultados usando el SID
+      ansible.builtin.uri:
+        url: "https://<splunk_instance>/services/search/jobs/{{ search_id }}/results/"
+        method: GET
+        user: "<usuario>"
+        password: "<contraseña>"
+        force_basic_auth: true
+        validate_certs: false
+        return_content: true
+      register: search_results
+
+    - name: Mostrar los resultados de la búsqueda
+      ansible.builtin.debug:
+        var: search_results.content
