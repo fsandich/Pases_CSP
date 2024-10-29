@@ -5,7 +5,7 @@
   tasks:
     - name: Obtener el SID para la consulta en Splunk
       ansible.builtin.uri:
-        url: "https://<splunk_instance>/services/search/jobs"
+        url: "https://bac.splunkcloud.com:8089/services/search/jobs"
         method: POST
         user: "<usuario>"
         password: "<contraseña>"
@@ -26,7 +26,7 @@
 
     - name: Obtener los resultados usando el SID
       ansible.builtin.uri:
-        url: "https://<splunk_instance>/services/search/jobs/{{ search_id }}/results/"
+        url: "https://bac.splunkcloud.com:8089/services/search/jobs/{{ search_id }}/results/"
         method: GET
         user: "<usuario>"
         password: "<contraseña>"
