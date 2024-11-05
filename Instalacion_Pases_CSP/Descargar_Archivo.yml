@@ -2,7 +2,7 @@
 - name: Descargar activo desde GitHub usando ApiRest
   hosts: localhost
   vars:
-    github_token: "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"
+    github_token: "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"
     owner: "BAC-Credomatic"
     repo: "ecsp-pasarelas-wcf"
   tasks:
@@ -13,6 +13,7 @@
         headers:
           Authorization: "Bearer {{ github_token }}"
           accept: "application/vnd.github.v3+json"
+      delegate_to: localhost
       register: release_info
 
     - name: Resultado de la consulta
@@ -25,13 +26,15 @@
 
     - name: Descargar archivo desde GitHub
       when: release_info.json.assets | length > 0
-      ansible.builtin.get_url:
+      ansible.builtin.uri:
         url: "{{ asset_api_url }}"
+        method: GET
         headers:
-          Authorization: 'Bearer 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'
-          Accept: 'application/octet-stream'
+          Authorization: 'Bearer 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'
+          Accept: 'application/vnd.github.v3+json'
         dest: /tmp/archivodeinstalacion.zip
         mode: '0644'
+      delegate_to: localhost
       register: download_result
 
     - name: Resultado de la descarga
@@ -44,12 +47,11 @@
     - name: Copiar archivo al servidor destino
       ansible.builtin.copy:
         src: /tmp/archivodeinstalacion.zip
-        dest: /tmp/archivodeinstalacion.zip
+        dest: C:/tmp/archivodeinstalacion.zip
         mode: '0644'
 
     - name: Descomprimir archivo
-      ansible.builtin.unarchive:
-        src: /tmp/archivodeinstalacion.zip
-        dest: /tmp/
-        remote_src: true
-        mode: '0644'
+      community.windows.win_unzip:
+        src: C:/tmp/archivodeinstalacion.zip
+        dest: C:/tmp/
+        creates: c:/tmp
